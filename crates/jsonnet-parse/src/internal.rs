@@ -148,6 +148,10 @@ fn expr_prec(p: &mut Parser<'_>, min_prec: Prec) -> Option<Exited> {
       expr_prec_must(p, Prec::Unary);
       SK::ExprUnaryOp
     }
+    SK::HashBang => {
+      type_annotation(p);
+      SK::ExprTypeAnnotation
+    }
     _ => {
       if string(p) {
         p.bump();
@@ -239,6 +243,18 @@ fn object(p: &mut Parser<'_>) -> Exited {
   while comp_spec(p).is_some() {}
   p.eat(SK::RCurly);
   p.exit(en, SK::Object)
+}
+
+fn type_annotation(p: &mut Parser<'_>) -> Exited {
+  always!(p.at(SK::HashBang));
+  let en = p.enter();
+  p.bump();
+  p.eat(SK::Id);
+  p.eat(SK::Colon);
+  p.eat(SK::Id);
+  p.eat(SK::MinusGt);
+  p.eat(SK::Id);
+  p.exit(en, SK::ExprTypeAnnotation)
 }
 
 #[must_use]

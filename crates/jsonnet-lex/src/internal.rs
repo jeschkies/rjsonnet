@@ -15,8 +15,21 @@ pub(crate) fn token(st: &mut St<'_>, out: &mut error::Output, b: u8) -> SK {
   }
   if b == b'#' {
     st.bump();
+    if st.cur() == Some(b'!') {
+      st.bump();
+      return SK::HashBang;
+    }
+
     st.bump_while(|b| b != b'\n');
     return SK::HashComment;
+  }
+  if b == b'-' {
+    st.bump();
+    if st.cur() == Some(b'>') {
+      st.bump();
+      return SK::MinusGt;
+    }
+    return SK::Minus;
   }
   if b == b'/' {
     st.bump();

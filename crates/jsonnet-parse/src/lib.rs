@@ -12,8 +12,8 @@ pub fn get(tokens: &[token::Token<'_, SK>]) -> Parse {
   let en = p.enter();
   internal::expr_must(&mut p);
   // could have this be a while loop, but then we'd just get a lot of errors
-  if p.peek().is_some() {
-    p.error(ErrorKind::Trailing);
+  if let Some(t) = p.peek() {
+    p.error(ErrorKind::Trailing(t.kind));
     p.bump();
   }
   p.exit(en, SK::Root);
@@ -52,7 +52,7 @@ impl Error {
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &self.0.inner {
-      ErrorKind::Trailing => f.write_str("trailing token"),
+      ErrorKind::Trailing(k) => write!(f, "trailing token {k}"),
       ErrorKind::Expected(e) => {
         write!(f, "expected {e}")?;
         if let Some(k) = self.0.kind {
@@ -67,7 +67,7 @@ impl fmt::Display for Error {
 
 #[derive(Debug)]
 enum ErrorKind {
-  Trailing,
+  Trailing(SK),
   Expected(Expected),
   ExtraComma,
 }

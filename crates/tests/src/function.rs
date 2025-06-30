@@ -6,6 +6,7 @@ use crate::check::JsonnetInput;
 fn function() {
   JsonnetInput::manifest(
     r"
+#! inc : number -> number
 local inc = function(x) x + 1;
 inc(3)
 ",

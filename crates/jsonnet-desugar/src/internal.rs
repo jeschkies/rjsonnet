@@ -192,6 +192,11 @@ pub(crate) fn get_expr(
       st.err_token(&kw, error::Kind::Tailstrict);
       return get_expr(st, cx, expr.expr(), in_obj, false);
     }
+    ast::Expr::ExprTypeAnnotation(expr) => {
+      let field = expr.field()?;
+      st.err_token(&field, error::Kind::PathNotFound(field.text().to_string()));
+      todo!()
+    }
   };
   Some(st.expr(ptr, data))
 }

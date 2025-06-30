@@ -33,7 +33,13 @@ fn main() {
   let doc: FxHashMap<_, _> = doc.iter().map(|(&k, v)| (k, v.as_str())).collect();
   let options = syntax_gen::Options {
     lang: "Jsonnet",
-    trivia: &["Whitespace", "SlashSlashComment", "HashComment", "BlockComment", "Invalid"],
+    trivia: &[
+      "Whitespace",
+      "SlashSlashComment",
+      "HashComment",
+      "BlockComment",
+      "Invalid",
+    ],
     grammar: include_str!("syntax.ungram"),
     doc: &doc,
     special: &FxHashMap::from_iter([

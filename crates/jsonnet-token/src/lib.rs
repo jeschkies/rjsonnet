@@ -41,7 +41,7 @@ pub enum Error {
 }
 
 /// All the tokens.
-pub const ALL: [Token; 51] = [
+pub const ALL: [Token; 52] = [
   Token {
     text: ":::",
     purposes: &[TokenPurpose {
@@ -829,6 +829,20 @@ pub const ALL: [Token; 51] = [
         example: indoc! {r#"
           assert "foo" in { foo: 3 };
           assert !("bar" in { foo: 3 });
+        "#},
+        outcome: Ok(()),
+      },
+    ],
+  },
+  Token {
+    text: "->",
+    purposes: &[
+      TokenPurpose {
+        doc: indoc! {"
+          A type annotation function.
+        "},
+        example: indoc! {r#"
+          #! f: number -> number
         "#},
         outcome: Ok(()),
       },

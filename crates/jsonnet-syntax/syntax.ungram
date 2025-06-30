@@ -27,6 +27,7 @@ Expr =
 | ExprImport
 | ExprError
 | ExprTailstrict
+| ExprTypeAnnotation
 
 // not real exprs
 ExprHole = '...'
@@ -122,3 +123,6 @@ String =
 
 // not used in any expressions
 MergeConflictMarkerUNUSED = 'MergeConflictMarker'
+
+ExprTypeAnnotation =
+  '#!' field:'Id' ':' Param* '->' 'Id'
