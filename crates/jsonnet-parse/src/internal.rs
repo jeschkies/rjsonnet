@@ -245,16 +245,15 @@ fn object(p: &mut Parser<'_>) -> Exited {
   p.exit(en, SK::Object)
 }
 
-fn type_annotation(p: &mut Parser<'_>) -> Exited {
+fn type_annotation(p: &mut Parser<'_>) {
   always!(p.at(SK::HashBang));
-  let en = p.enter();
   p.bump();
   p.eat(SK::Id);
   p.eat(SK::Colon);
   p.eat(SK::Id);
   p.eat(SK::MinusGt);
   p.eat(SK::Id);
-  p.exit(en, SK::ExprTypeAnnotation)
+  expr_must(p);
 }
 
 #[must_use]

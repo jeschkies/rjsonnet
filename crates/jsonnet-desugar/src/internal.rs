@@ -193,9 +193,33 @@ pub(crate) fn get_expr(
       return get_expr(st, cx, expr.expr(), in_obj, false);
     }
     ast::Expr::ExprTypeAnnotation(expr) => {
-      let field = expr.field()?;
-      st.err_token(&field, error::Kind::PathNotFound(field.text().to_string()));
-      todo!()
+      // TODO: switch case on ty
+      println!("ty: {}", expr.ty()?.text());
+
+      let expr_local = expr.expr_local()?;
+
+      // std.isNumber()
+      let std = Some(st.expr(ptr, ExprData::Id(Id::std_unutterable)));
+      let idx = Some(st.expr(ptr, ExprData::Prim(Prim::String(Str::isNumber))));
+      let func = Some(st.expr(ptr, ExprData::Subscript { on: std, idx }));
+
+      let bind = expr_local.bind_commas().next()?;
+      let cond = match bind.bind()?.expr()? {
+        ast::Expr::ExprFunction(expr) => {
+            let param = expr.paren_params()?.params().next()?; 
+            let id = st.id(param.id()?);
+            let params = vec![Some(st.expr(ptr, ExprData::Id(id)))];
+            Some(st.expr(ptr, ExprData::Call { func, positional: params, named: Vec::new() }))
+        }
+        _ => {
+          println!("not local: {:?}", expr_local.syntax());
+          None
+        }
+      };
+
+      let yes = get_expr(st, cx, Some(ast::Expr::ExprLocal(expr_local)), in_obj, false);
+
+      ExprData::If { cond, yes, no: None }
     }
   };
   Some(st.expr(ptr, data))

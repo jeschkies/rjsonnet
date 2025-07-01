@@ -125,4 +125,5 @@ String =
 MergeConflictMarkerUNUSED = 'MergeConflictMarker'
 
 ExprTypeAnnotation =
-  '#!' field:'Id' ':' Param* '->' 'Id'
+  '#!' field:'Id' ':' ty:'Id' '->' 'Id' ExprLocal
+
