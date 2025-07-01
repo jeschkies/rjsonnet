@@ -201,25 +201,32 @@ pub(crate) fn get_expr(
       // std.isNumber()
       let std = Some(st.expr(ptr, ExprData::Id(Id::std_unutterable)));
       let idx = Some(st.expr(ptr, ExprData::Prim(Prim::String(Str::isNumber))));
-      let func = Some(st.expr(ptr, ExprData::Subscript { on: std, idx }));
+      let std_is_number = Some(st.expr(ptr, ExprData::Subscript { on: std, idx }));
 
-      let bind = expr_local.bind_commas().next()?;
-      let cond = match bind.bind()?.expr()? {
-        ast::Expr::ExprFunction(expr) => {
-            let param = expr.paren_params()?.params().next()?; 
+      let bind = expr_local.bind_commas().next()?.bind()?;
+      let bind_expr = bind.expr()?;
+      let (id, rhs) =  match get_bind(st, cx, bind, in_obj) {
+        Some((bind_id, rhs)) => {
+          // HACK: this should be in the get_bind function etc
+          if let ast::Expr::ExprFunction(fn_expr) = bind_expr {
+            // wrap rhs
+            let param = fn_expr.paren_params()?.params().next()?; 
             let id = st.id(param.id()?);
+            println!("param: {:?}", param.id()?.text());
             let params = vec![Some(st.expr(ptr, ExprData::Id(id)))];
-            Some(st.expr(ptr, ExprData::Call { func, positional: params, named: Vec::new() }))
+            let call = Some(st.expr(ptr, ExprData::Call { func: std_is_number, positional: params, named: Vec::new() }));
+
+            (bind_id, Some(st.expr(ptr, ExprData::If { cond: call, yes: rhs, no: None })))
+          } else {
+            (bind_id, rhs)
+          }
         }
         _ => {
-          println!("not local: {:?}", expr_local.syntax());
-          None
+          return None
         }
       };
-
-      let yes = get_expr(st, cx, Some(ast::Expr::ExprLocal(expr_local)), in_obj, false);
-
-      ExprData::If { cond, yes, no: None }
+      let body = get_expr(st, cx, expr_local.expr(), in_obj, false);
+      ExprData::Local { binds: vec![(id, rhs)], body }
     }
   };
   Some(st.expr(ptr, data))
@@ -291,6 +298,7 @@ where
   })
 }
 
+// TODO: make type annotation an enum
 fn get_bind(st: &mut St, cx: Cx<'_>, bind: ast::Bind, in_obj: bool) -> Option<(Id, Expr)> {
   let lhs = st.id(bind.id()?);
   let rhs = bind.expr();
