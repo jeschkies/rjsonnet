@@ -1,9 +1,64 @@
 //! A CLI for static analysis.
 
+use diagnostic::{Diagnostic, Severity};
 use jsonnet_analyze::{Init, St, remove};
 use lang_srv_state::State as _;
 use paths::FileSystem as _;
 use std::{fmt, process::ExitCode};
+
+fn print_diagnostic(filename: &str, contents: &str, diagnostic: &Diagnostic) {
+  let lines: Vec<&str> = contents.lines().collect();
+  let range = diagnostic.range;
+  let line_num = range.start.line as usize;
+
+  // Ensure line number is valid
+  if line_num >= lines.len() {
+    println!("{filename}: {}", diagnostic.message);
+    return;
+  }
+
+  let line_content = lines[line_num];
+  let start_col = range.start.col as usize;
+  let end_col = range.end.col as usize;
+
+  // Print filename and line number
+  println!("{}:{}:{}", filename, line_num + 1, start_col + 1);
+  println!();
+
+  // Print the line with line number
+  println!("{:4} | {}", line_num + 1, line_content);
+
+  // Print the error marker with ^^^
+  print!("     | ");
+  if start_col < line_content.len() {
+    // Print spaces up to the start column
+    for _ in 0..start_col {
+      print!(" ");
+    }
+
+    // Print the markers
+    let marker_len = if end_col > start_col {
+      std::cmp::min(end_col - start_col, line_content.len() - start_col)
+    } else {
+      1
+    };
+
+    for _ in 0..marker_len {
+      print!("^");
+    }
+  } else {
+    print!("^");
+  }
+  println!();
+
+  // Print the error message
+  let severity = match diagnostic.severity {
+    Severity::Error => "error",
+    Severity::Warning => "warning",
+  };
+  println!("{}: {}", severity, diagnostic.message);
+  println!();
+}
 
 fn main() -> ExitCode {
   let args = match get_args() {
@@ -158,7 +213,7 @@ fn run(args: Args) -> usize {
         continue;
       }
     };
-    let (_, ds) = st.open(&fs, p.clone(), contents);
+    let (_, ds) = st.open(&fs, p.clone(), contents.clone());
     if let Some(options) = args.rm_unused {
       if let Some(contents) = st.remove_unused(&fs, p.as_clean_path(), options) {
         if let Err(e) = std::fs::write(p.as_path(), contents.as_bytes()) {
@@ -173,7 +228,7 @@ fn run(args: Args) -> usize {
     ret += ds.len();
     for d in ds {
       if !args.quiet {
-        println!("{arg}:{d}");
+        print_diagnostic(arg, &contents, &d);
       }
     }
   }

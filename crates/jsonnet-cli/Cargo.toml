@@ -1,19 +1,20 @@
 [package]
-name = "jsonnet-cli"
-version.workspace = true
 edition.workspace = true
 license.workspace = true
+name = "jsonnet-cli"
 publish.workspace = true
+version.workspace = true
 
 [lints]
 workspace = true
 
 [[bin]]
+doctest = false
 name = "jsonnet-cli"
 test = false
-doctest = false
 
 [dependencies]
+diagnostic.workspace = true
 env_logger.workspace = true
 paths.workspace = true
 pico-args.workspace = true

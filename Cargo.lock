@@ -604,6 +604,7 @@ dependencies = [
 name = "jsonnet-cli"
 version = "0.9.7"
 dependencies = [
+ "diagnostic",
  "env_logger",
  "jsonnet-analyze",
  "lang-srv-state",
