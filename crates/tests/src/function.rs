@@ -6,11 +6,34 @@ use crate::check::JsonnetInput;
 fn function() {
   JsonnetInput::manifest(
     r"
+local inc = function(x) x + 1;
+inc(3)
+",
+    "4",
+  )
+  .check();
+}
+
+#[test]
+fn function_type_check() {
+  JsonnetInput::eval_error(
+    r"
+local inc = function(x) assert std.isNumber(x); x + 1;
+inc('3')
+##  ^^^ err: incompatible types; expected `number`; found `string`
+",
+"Assertion failed"
+  )
+  .check();
+
+  JsonnetInput::eval_error(
+    r"
 #! inc : number -> number
 local inc = function(x) x + 1;
 inc('3')
+##  ^^^ err: incompatible types; expected `number`; found `string`
 ",
-    "4",
+"Assertion failed"
   )
   .check();
 }

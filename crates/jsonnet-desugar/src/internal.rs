@@ -205,25 +205,52 @@ pub(crate) fn get_expr(
 
       let bind = expr_local.bind_commas().next()?.bind()?;
       let bind_expr = bind.expr()?;
-      let (id, rhs) =  match get_bind(st, cx, bind, in_obj) {
+      let (id, rhs) = match get_bind(st, cx, bind, in_obj) {
         Some((bind_id, rhs)) => {
           // HACK: this should be in the get_bind function etc
           if let ast::Expr::ExprFunction(fn_expr) = bind_expr {
-            // wrap rhs
-            let param = fn_expr.paren_params()?.params().next()?; 
-            let id = st.id(param.id()?);
-            println!("param: {:?}", param.id()?.text());
-            let params = vec![Some(st.expr(ptr, ExprData::Id(id)))];
-            let call = Some(st.expr(ptr, ExprData::Call { func: std_is_number, positional: params, named: Vec::new() }));
+            // Get function parameters
+            let mut params = Vec::<(Id, Option<Expr>)>::new();
+            for param in fn_expr.paren_params().into_iter().flat_map(|x| x.params()) {
+              let Some(lhs) = param.id() else { continue };
+              let lhs = st.id(lhs);
+              let rhs = param.eq_expr().map(|rhs| get_expr(st, cx, rhs.expr(), in_obj, false));
+              params.push((lhs, rhs));
+            }
 
-            (bind_id, Some(st.expr(ptr, ExprData::If { cond: call, yes: rhs, no: None })))
+            // Get the first parameter for the type check
+            let param = fn_expr.paren_params()?.params().next()?;
+            let param_id = st.id(param.id()?);
+            println!("param: {:?}", param.id()?.text());
+            let type_check_params = vec![Some(st.expr(ptr, ExprData::Id(param_id)))];
+            let call = Some(st.expr(
+              ptr,
+              ExprData::Call {
+                func: std_is_number,
+                positional: type_check_params,
+                named: Vec::new(),
+              },
+            ));
+
+            // Get the original function body
+            let original_body = get_expr(st, cx, fn_expr.expr(), in_obj, false);
+
+            // Wrap the body with the type check
+            let type_error_msg = Some(st.expr(ptr, ExprData::Prim(Prim::String(Str::ASSERTION_FAILED))));
+            let no = Some(st.expr(ptr, ExprData::Error(type_error_msg)));
+            let wrapped_body =
+              Some(st.expr(ptr, ExprData::If { cond: call, yes: original_body, no }));
+
+            // Create new function with wrapped body
+            let new_fn_data = ExprData::Fn { params, body: wrapped_body };
+            let new_rhs = Some(st.expr(ptr, new_fn_data));
+
+            (bind_id, new_rhs)
           } else {
             (bind_id, rhs)
           }
         }
-        _ => {
-          return None
-        }
+        _ => return None,
       };
       let body = get_expr(st, cx, expr_local.expr(), in_obj, false);
       ExprData::Local { binds: vec![(id, rhs)], body }

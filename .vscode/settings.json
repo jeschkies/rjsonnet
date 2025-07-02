@@ -93,5 +93,8 @@
     "xnor",
     "xtask"
   ],
-  "markdown.validate.enabled": true
+  "markdown.validate.enabled": true,
+  "files.watcherExclude": {
+    "**/target": true
+  }
 }
