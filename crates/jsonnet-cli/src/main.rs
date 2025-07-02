@@ -32,9 +32,7 @@ fn print_diagnostic(filename: &str, contents: &str, diagnostic: &Diagnostic) {
   print!("     | ");
   if start_col < line_content.len() {
     // Print spaces up to the start column
-    for _ in 0..start_col {
-      print!(" ");
-    }
+    print!("{}", " ".repeat(start_col));
 
     // Print the markers
     let marker_len = if end_col > start_col {
@@ -43,13 +41,10 @@ fn print_diagnostic(filename: &str, contents: &str, diagnostic: &Diagnostic) {
       1
     };
 
-    for _ in 0..marker_len {
-      print!("^");
-    }
+    println!("{}", "^".repeat(marker_len));
   } else {
-    print!("^");
+    println!("^");
   }
-  println!();
 
   // Print the error message
   let severity = match diagnostic.severity {
