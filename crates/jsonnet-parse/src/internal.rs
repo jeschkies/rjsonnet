@@ -250,7 +250,17 @@ fn type_annotation(p: &mut Parser<'_>) {
   p.bump();
   p.eat(SK::Id);
   p.eat(SK::Colon);
-  p.eat(SK::Id);
+
+  if p.at(SK::Id) {
+    let en = p.enter();
+    p.bump();
+    p.exit(en, SK::ExprId);
+  } else { // TODO: check {
+    let en = p.enter();
+    object(p);
+    p.exit(en, SK::ExprObject);
+  } 
+
   p.eat(SK::MinusGt);
   p.eat(SK::Id);
   expr_must(p);

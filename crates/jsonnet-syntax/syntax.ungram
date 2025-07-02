@@ -124,6 +124,8 @@ String =
 // not used in any expressions
 MergeConflictMarkerUNUSED = 'MergeConflictMarker'
 
+
+TypeInfo = ExprId | ExprObject
 ExprTypeAnnotation =
-  '#!' field:'Id' ':' ty:'Id' '->' 'Id' ExprLocal
+  '#!' field:'Id' ':' ty:TypeInfo '->' 'Id' ExprLocal
 

@@ -15,7 +15,7 @@ inc(3)
 }
 
 #[test]
-fn function_type_check() {
+fn function_type_check_number() {
   JsonnetInput::eval_error(
     r"
 local inc = function(x) assert std.isNumber(x); x + 1;
@@ -32,6 +32,20 @@ inc('3')
 local inc = function(x) x + 1;
 inc('3')
 ##  ^^^ err: incompatible types; expected `number`; found `string`
+",
+"Assertion failed"
+  )
+  .check();
+}
+
+#[test]
+fn function_type_check_object() {
+  JsonnetInput::eval_error(
+    r"
+#! inc : { a: number } -> number
+local inc = function(x) x.a + 1;
+inc({ c: '3' })
+##  ^^^^^^^^^^ err: incompatible types; expected `number`; found `string`
 ",
 "Assertion failed"
   )

@@ -193,8 +193,12 @@ pub(crate) fn get_expr(
       return get_expr(st, cx, expr.expr(), in_obj, false);
     }
     ast::Expr::ExprTypeAnnotation(expr) => {
-      // TODO: switch case on ty
-      println!("ty: {}", expr.ty()?.text());
+      if let Some(ty) = expr.ty() {
+        println!("ty: {:?}", ty.syntax());
+      } else {
+        println!("no ty");
+        return None;
+      }
 
       let expr_local = expr.expr_local()?;
 
@@ -218,6 +222,7 @@ pub(crate) fn get_expr(
               params.push((lhs, rhs));
             }
 
+            // TODO: switch case on ty
             // Get the first parameter for the type check
             let param = fn_expr.paren_params()?.params().next()?;
             let param_id = st.id(param.id()?);
