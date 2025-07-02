@@ -9,6 +9,9 @@ local inc_complex = function(x) x.a + 1;
   b: inc_complex({b: 3}),
 
   c: inc('3'),
+
+  local d = 'b',
+  e: inc(d),
 }
 
 
