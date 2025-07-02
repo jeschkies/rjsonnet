@@ -17,7 +17,7 @@ use jsonnet_ty::{LocalStore, Ty};
 pub fn get(mut st: st::St<'_>, ar: &ExprArena, expr: Expr) -> (st::Statics, LocalStore) {
   st.scope.define(Id::std, Ty::STD, jsonnet_expr::def::Def::Std);
   st.scope.define(Id::std_unutterable, Ty::STD, jsonnet_expr::def::Def::Std);
-  print_expr(ar, expr, 0);
+  // print_expr(ar, expr, 0);
   check::get(&mut st, ar, expr);
   // these can never be marked as unused
   _ = st.scope.undefine(Id::std);
