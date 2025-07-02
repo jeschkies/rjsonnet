@@ -125,7 +125,9 @@ String =
 MergeConflictMarkerUNUSED = 'MergeConflictMarker'
 
 
-TypeInfo = ExprId | ExprObject
+TypeInfo = ExprId | ExprObject // TypeRecord
+// TypeRecord = '{' RecordMember* '}'
+// RecordMember = field:'Id' ':' TypeInfo ','?
 ExprTypeAnnotation =
   '#!' field:'Id' ':' ty:TypeInfo '->' 'Id' ExprLocal
 

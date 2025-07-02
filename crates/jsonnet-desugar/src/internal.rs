@@ -245,11 +245,11 @@ pub(crate) fn get_expr(
 
 fn get_type_check(st: &mut St, ptr: ast::SyntaxNodePtr, ty: ast::TypeInfo, param_id: Id) -> Expr {
   println!("param: {:?}, ty: {:?}", param_id, ty.syntax());
+  let std = Some(st.expr(ptr, ExprData::Id(Id::std_unutterable)));
   match ty {
     ast::TypeInfo::ExprId(type_id)=> {
       if type_id.id()?.text() == "number" {
         // std.isNumber()
-        let std = Some(st.expr(ptr, ExprData::Id(Id::std_unutterable)));
         let idx = Some(st.expr(ptr, ExprData::Prim(Prim::String(Str::isNumber))));
         let std_is_number = Some(st.expr(ptr, ExprData::Subscript { on: std, idx }));
         let type_check_params = vec![Some(st.expr(ptr, ExprData::Id(param_id)))];
@@ -265,7 +265,36 @@ fn get_type_check(st: &mut St, ptr: ast::SyntaxNodePtr, ty: ast::TypeInfo, param
         None
       }
     }
-    _ => None,
+    ast::TypeInfo::ExprObject(object_type) => {
+    // TODO: add std.isObject
+    // TODO: handle type assertion in fields
+      for member in object_type.object()?.members() {
+        if let Some(ast::MemberKind::Field(field)) = member.member_kind() {
+          // std.objectHasAll
+          let idx = Some(st.expr(ptr, ExprData::Prim(Prim::String(Str::objectHasAll))));
+          let std_object_has= Some(st.expr(ptr, ExprData::Subscript { on: std, idx }));
+          // TODO: introduce new tokens for type records 
+          let field_name = match field.field_name()? {
+            ast::FieldName::FieldNameId(id) => st.str(id.id()?.text()),
+            _ => continue,
+          };
+          let type_check_params = vec![
+            Some(st.expr(ptr, ExprData::Id(param_id))),
+            Some(st.expr(ptr, ExprData::Prim(Prim::String(field_name))))
+          ];
+
+          return Some(st.expr(
+            ptr,
+            ExprData::Call {
+              func: std_object_has,
+              positional: type_check_params,
+              named: Vec::new(),
+            },
+          ));
+        }
+      }
+      None
+    }
   }
 }
 
