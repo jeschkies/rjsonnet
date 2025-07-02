@@ -65,7 +65,6 @@ impl Scope {
 
   pub(crate) fn add_facts(&mut self, tys: &mut ty::MutStore<'_>, fs: &Facts) {
     for (&id, fact) in fs.iter() {
-      println!("add_facts: {fact:?} to {id:?}");
       let Some(stack) = self.store.get_mut(&id) else { continue };
       let Some(defined_id) = stack.last_mut() else { continue };
       let Some(ty) = defined_id.tys.last() else {

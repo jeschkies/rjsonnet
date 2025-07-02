@@ -42,10 +42,20 @@ inc('3')
 fn function_type_check_object() {
   JsonnetInput::eval_error(
     r"
+local inc = function(x) assert std.isObject(x) && 'a' in x && std.isNumber(x.a); x.a + 1;
+inc({ c: '3' })
+##  ^^^^^^^^^^ err: no such field: `a`
+",
+"Assertion failed"
+  )
+  .check();
+
+  JsonnetInput::eval_error(
+    r"
 #! inc : { a: number } -> number
 local inc = function(x) x.a + 1;
 inc({ c: '3' })
-##  ^^^^^^^^^^ err: incompatible types; expected `number`; found `string`
+##  ^^^^^^^^^^ err: no such field: `a`
 ",
 "Assertion failed"
   )
