@@ -193,19 +193,7 @@ pub(crate) fn get_expr(
       return get_expr(st, cx, expr.expr(), in_obj, false);
     }
     ast::Expr::ExprTypeAnnotation(expr) => {
-      if let Some(ty) = expr.ty() {
-        println!("ty: {:?}", ty.syntax());
-      } else {
-        println!("no ty");
-        return None;
-      }
-
       let expr_local = expr.expr_local()?;
-
-      // std.isNumber()
-      let std = Some(st.expr(ptr, ExprData::Id(Id::std_unutterable)));
-      let idx = Some(st.expr(ptr, ExprData::Prim(Prim::String(Str::isNumber))));
-      let std_is_number = Some(st.expr(ptr, ExprData::Subscript { on: std, idx }));
 
       let bind = expr_local.bind_commas().next()?.bind()?;
       let bind_expr = bind.expr()?;
@@ -226,25 +214,16 @@ pub(crate) fn get_expr(
             // Get the first parameter for the type check
             let param = fn_expr.paren_params()?.params().next()?;
             let param_id = st.id(param.id()?);
-            println!("param: {:?}", param.id()?.text());
-            let type_check_params = vec![Some(st.expr(ptr, ExprData::Id(param_id)))];
-            let call = Some(st.expr(
-              ptr,
-              ExprData::Call {
-                func: std_is_number,
-                positional: type_check_params,
-                named: Vec::new(),
-              },
-            ));
 
             // Get the original function body
             let original_body = get_expr(st, cx, fn_expr.expr(), in_obj, false);
 
             // Wrap the body with the type check
+            let type_check_condition = get_type_check(st, ptr, expr.ty()?, param_id);
             let type_error_msg = Some(st.expr(ptr, ExprData::Prim(Prim::String(Str::ASSERTION_FAILED))));
             let no = Some(st.expr(ptr, ExprData::Error(type_error_msg)));
             let wrapped_body =
-              Some(st.expr(ptr, ExprData::If { cond: call, yes: original_body, no }));
+              Some(st.expr(ptr, ExprData::If { cond: type_check_condition, yes: original_body, no }));
 
             // Create new function with wrapped body
             let new_fn_data = ExprData::Fn { params, body: wrapped_body };
@@ -262,6 +241,32 @@ pub(crate) fn get_expr(
     }
   };
   Some(st.expr(ptr, data))
+}
+
+fn get_type_check(st: &mut St, ptr: ast::SyntaxNodePtr, ty: ast::TypeInfo, param_id: Id) -> Expr {
+  println!("param: {:?}, ty: {:?}", param_id, ty.syntax());
+  match ty {
+    ast::TypeInfo::ExprId(type_id)=> {
+      if type_id.id()?.text() == "number" {
+        // std.isNumber()
+        let std = Some(st.expr(ptr, ExprData::Id(Id::std_unutterable)));
+        let idx = Some(st.expr(ptr, ExprData::Prim(Prim::String(Str::isNumber))));
+        let std_is_number = Some(st.expr(ptr, ExprData::Subscript { on: std, idx }));
+        let type_check_params = vec![Some(st.expr(ptr, ExprData::Id(param_id)))];
+        Some(st.expr(
+          ptr,
+          ExprData::Call {
+            func: std_is_number,
+            positional: type_check_params,
+            named: Vec::new(),
+          },
+        ))
+      } else {
+        None
+      }
+    }
+    _ => None,
+  }
 }
 
 fn get_expr_or_null(
