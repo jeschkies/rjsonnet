@@ -1,0 +1,24 @@
+argcheck_missing_object_field.jsonnet:9:18
+
+   9 |   b: inc_complex({b: 3}),
+     |                  ^^^^^^
+warning: no such field: `a`
+
+argcheck_missing_object_field.jsonnet:11:10
+
+  11 |   c: inc('3'),
+     |          ^^^
+warning: incompatible types
+  expected `number`
+     found `string`
+
+argcheck_missing_object_field.jsonnet:14:10
+
+  14 |   e: inc(d),
+     |          ^
+warning: incompatible types
+  expected `number`
+     found `string`
+
+3 errors
+
